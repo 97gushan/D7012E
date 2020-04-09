@@ -43,7 +43,7 @@ formatOutput list (x: xs) =
     show (sum x) ++ "\t" ++ show (findStartIndex list x) ++ "\t" ++ 
     show (findEndIndex list x) ++ "\t[" ++ formatList x ++ formatOutput list xs
 
-formatHeaderOutput :: [Int] -> String
+formatHeaderOutput :: String
 formatHeaderOutput = "\nsize \ti \tj \tsublist \n\n"
 
 testList1 :: (Integral a ) => [a]
@@ -70,4 +70,4 @@ list = testList2
 k :: Int
 k = k2
 
-main = putStr(formatHeaderOutput list ++ formatOutput list (smallestK list k))
+main = putStr(formatHeaderOutput ++ formatOutput list (smallestK list k))
