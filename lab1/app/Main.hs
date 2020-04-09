@@ -19,23 +19,21 @@ smallestK :: (Integral a) => [a] -> Int -> [[a]]
 smallestK xs k = 
     let sublists = generateSublists xs
         sortedLists = sortSublists(filter (/= []) sublists)
-
     in take k sortedLists
 
-findStartIndex :: (Integral a) => [a] -> [a] -> a
+findStartIndex :: (Integral a) => [a] -> [a] -> Int
 findStartIndex list sublist = 
-    if head list == head sublist then 1
+    if take (length sublist) list == sublist then 1
     else 1 + findStartIndex (tail list) sublist  
 
-findEndIndex :: (Integral a) => [a] -> [a] -> a
+findEndIndex :: (Integral a) => [a] -> [a] -> Int
 findEndIndex list sublist = 
-    if head list == last sublist then 1
+    if take (length sublist) list == sublist then length sublist
     else 1 + findEndIndex (tail list) sublist  
 
 formatList :: [Int] -> String
 formatList [] = "]\n"
 formatList (x: xs) = show x ++ " " ++ formatList xs 
-
 
 formatOutput :: [Int] -> [[Int]] -> String
 formatOutput list [] = ""
@@ -55,6 +53,9 @@ testList2 = [24,-11,-34,42,-24,7,-19,21]
 testList3 :: (Integral a ) => [a]
 testList3 = [3,2,-4,3,2,-5,-2,2,3,-3,2,-5,6,-2,2,3]
 
+testList4 :: (Integral a ) => [a]
+testList4 = [1,1,-2,1,1]
+
 k1 :: Int
 k1 = 15
 
@@ -65,9 +66,12 @@ k3 :: Int
 k3 = 8
 
 list :: (Integral a) => [a]
-list = testList2
+list = testList1
 
 k :: Int
-k = k2
+k = k1
 
-main = putStr(formatHeaderOutput ++ formatOutput list (smallestK list k))
+main 
+    | null list = error "ERROR: list is empty"
+    | k > length list = error "ERROR: the value k is larger than the length of the list"
+    | otherwise = putStr(formatHeaderOutput ++ formatOutput list (smallestK list k))
