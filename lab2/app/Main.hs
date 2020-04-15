@@ -1,7 +1,8 @@
 module Main where
+import Data.Char
 
 import Lib
 import Expr
 
 main :: IO ()
-main = print(parse "1+1")
+main = print(run "exp(sin(2*x))" "x")
