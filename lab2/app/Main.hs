@@ -1,6 +1,7 @@
 module Main where
 
 import Lib
+import Expr
 
 main :: IO ()
-main = someFunc
+main = print(parse "1+1")
