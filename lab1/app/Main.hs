@@ -1,3 +1,5 @@
+-- Gustav Hansson
+
 module Main where
 
 getSum :: (Int, Int, [Int]) -> Int
