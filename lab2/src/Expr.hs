@@ -1,3 +1,5 @@
+-- Gustav Hansson
+
 -- Code to Haskell lab assignment 2 in the course D7012E by Håkan Jonsson
 
 module Expr
@@ -117,10 +119,10 @@ simplify (Op oper left right) =
       ("/",e,Const 1) -> e
       ("-",le,re)     -> if left==right then Const 0 else Op "-" le re
       (op,le,re)      -> Op op le re
-simplify (App fn expr) = App fn expr
+simplify (App fn expr) = App fn (simplify expr)
 
 mkFn :: EXPR -> String -> (Float -> Float) 
-mkFn e v x = eval e [(v, x)]
+mkFn expr var x = eval expr [(var, x)]
 
 find :: (Float -> Float) -> (Float -> Float) -> Float -> Float
 find expr der val 
