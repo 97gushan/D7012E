@@ -5,4 +5,4 @@ import Lib
 import TestExpr
 
 main :: IO ()
-main = print(n31)
+main = print(n4)
