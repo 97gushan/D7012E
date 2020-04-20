@@ -8,7 +8,9 @@ module Expr
     eval,
     diff,
     simplify,
-    run,
+    runDiff,
+    runFn,
+    findZero,
   ) where 
 
 import Data.Char
@@ -117,5 +119,20 @@ simplify (Op oper left right) =
       (op,le,re)      -> Op op le re
 simplify (App fn expr) = App fn expr
 
-run :: String -> String -> String 
-run expr var = unparse (simplify (diff (Var var) (parse expr)))
+mkFn :: EXPR -> String -> (Float -> Float) 
+mkFn e v x = eval e [(v, x)]
+
+find :: (Float -> Float) -> (Float -> Float) -> Float -> Float
+find expr der val 
+  | abs (x - val) < 0.0001 = x
+  | otherwise = find expr der x
+  where x = val - expr val / der val
+
+findZero :: String -> String -> (Float -> Float)
+findZero var expr = find (mkFn (parse expr) var) (mkFn (diff (Var var) (parse expr)) var)
+
+runDiff :: String -> String -> String 
+runDiff expr var = unparse (simplify (diff (Var var) (parse expr)))
+
+runFn :: String -> String -> (Float -> Float)
+runFn expr var = mkFn (parse expr) var
