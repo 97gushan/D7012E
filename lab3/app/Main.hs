@@ -3,6 +3,7 @@ module Main where
 import Lib
 
 import TestExpr
+import TestStatement
 
 main :: IO ()
-main = print(n4)
+main = print(p11)
