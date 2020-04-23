@@ -4,6 +4,8 @@ import Lib
 
 import TestExpr
 import TestStatement
+import TestProgram
 
 main :: IO ()
-main = print(p11)
+-- main = putStr(testStatement)
+main = print(rp2)
