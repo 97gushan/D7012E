@@ -1,5 +1,8 @@
+-- Gustav Hansson
+
 module Statement(T, parse, toString, fromString, exec) where
 import Prelude hiding (return, fail)
+import Control.Monad
 import Parser hiding (T)
 import qualified Dictionary
 import qualified Expr
@@ -50,7 +53,7 @@ write = (accept "write" -# Expr.parse) #- require ";" >-> buildWrite
 buildWrite = Write
 
 exec :: [T] -> Dictionary.T String Integer -> [Integer] -> [Integer]
-exec [] dict input = []
+exec [] _ _ = []
 exec (If cond thenStmts elseStmts: stmts) dict input = 
     if Expr.value cond dict > 0 
     then exec (thenStmts: stmts) dict input
@@ -61,10 +64,8 @@ exec (While cond s: stmts) dict input =
     then exec (s: (While cond s:stmts)) dict input
     else exec stmts dict input
 
-exec (Repeat cond s: stmts) dict input =
-    if Expr.value cond dict == 0
-    then exec (s:stmts) dict input
-    else exec (s: (Repeat cond s: stmts)) dict input
+exec (Repeat cond s: stmts) dict input =        
+    exec (s: If cond Skip (Repeat cond s): stmts) dict input
 
 exec (Assignment var val : stmts) dict input =
     exec stmts (Dictionary.insert (var, Expr.value val dict) dict) input 
@@ -76,7 +77,7 @@ exec (Read s: stmts) dict (i:input) =
     exec stmts (Dictionary.insert (s, i) dict) input
 exec (Write s: stmts) dict input =
     Expr.value s dict: exec stmts dict input
-exec _ _ _ = error "error"
+exec _ _ _ = []
 
 toStringIndent :: Int -> T -> String
 toStringIndent i (If cond bt be) =  calcIndent i ++ "if " ++ toString cond ++ " then\n" ++ toStringIndent (i+1) bt ++ "\nelse \n" ++ toStringIndent (i+1) be ++ "\n"

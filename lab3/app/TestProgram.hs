@@ -1,3 +1,5 @@
+-- Gustav Hansson
+
 {- Test for Program -}
 module TestProgram where
 
@@ -33,7 +35,19 @@ p1 = fromString  ("\
 \  end\
 \write s;")
 
-p2 = fromString ("begin read n ; s := 0; repeat begin s:=s+n; n:=n-1; end until (0-n)+1; write s; end")
+p2 = fromString ("read n ; s := 0; repeat begin s:=s+n; n:=n-1; end until (0-n)+1; write s;")
+
+p3 = fromString ("\
+\read k;\
+\write k;\
+\repeat\
+\ begin\
+\ k := k + 1;\
+\ write k;\
+\ end\
+\until k;")
+
+
 s2 = toString p2
 
 sp = putStr (toString p)
@@ -42,4 +56,6 @@ rp = Program.exec p [3,16]
 
 rp1 = Program.exec p1 [1024, 2]
 
-rp2 = Program.exec p2 [3]
+rp2 = Program.exec p2 [2] 
+
+rp3 = Program.exec p3 [4]

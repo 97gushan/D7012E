@@ -1,3 +1,5 @@
+-- Gustav Hansson
+
 module Expr(Expr, T, parse, fromString, value, toString) where
 
 {-
@@ -80,7 +82,7 @@ value (Sub t u) dic = value t dic - value u dic
 value (Mul t u) dic = value t dic * value u dic
 value (Div t u) dic 
         | value u dic == 0 = error "ERROR: Division by 0"
-        | otherwise = value t dic + value u dic
+        | otherwise = (value t dic) `div` (value u dic)
 
 -- value (Num n) _ = error "value not implemented"
 

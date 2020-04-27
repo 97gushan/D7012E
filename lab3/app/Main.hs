@@ -1,3 +1,5 @@
+-- Gustav Hansson
+
 module Main where
 
 import Lib
@@ -7,5 +9,5 @@ import TestStatement
 import TestProgram
 
 main :: IO ()
--- main = putStr(testStatement)
+-- main = putStr(s2)
 main = print(rp2)

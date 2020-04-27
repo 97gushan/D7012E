@@ -1,3 +1,5 @@
+-- Gustav Hansson
+
 {- Test for Parser.hs -}
 module TestParser where
 
