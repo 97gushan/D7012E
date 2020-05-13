@@ -40,8 +40,9 @@ solverR(state(robot(r2, OwnedItems), _), _, [done | []]) :-
 
 solverR(State, N, [Action | Trace]) :-
     N > 0,
+    M is N-1,
     action(State, Action, NewState),
-    solverR(NewState, N-1, Trace).
+    solverR(NewState, M, Trace).
 
 solve(Trace):-
     BeginState = state(
