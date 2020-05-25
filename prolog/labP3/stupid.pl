@@ -6,96 +6,83 @@
 
 % Generic interactive Game shell using Minimax search
  
-% Copyright (c) 2002 Craig Boutilier 
-% modified for SWI by Fahiem Bacchus 
- 
- 
-% Human is player 1 
-% Computer is player 2. 
+% Copyright (c) 2002 Craig Boutilier
+%
+% modified for SWI by Fahiem Bacchus
+%
+% modified 2018 by Håkan Jonsson to have the human player
+% automatically make random moves 
+
+:- use_module(library(random)).
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-% to utilize the shell, one has to define the rules and states of the 
-% game. Like the search routines, the shell is designed to take as 
-% input predicates that tell it, e.g., what are the new states yielded 
-% by what moves.  
-% 
-% In particular the code depends on the following game-specific state 
-% predicates 
-% 
-% 
-% * initialize(InitialState,InitialPlyr)  
-%   - returns an initial game state and Initial player 
-%     (for the initial game state  you can use initBoard(B))
+% This script works like play.pl for the computer player. The
+% difference compared with play.pl is that the human player, below
+% nicknamed "Stupid", now plays automatically by making random
+% moves: It tries, at random, to place a stone at empty positions
+% and without any AI. 
 %
-% * winner(State,Plyr)  
-%   - returns winning player if State is a terminal position and
-%     Plyr has a higher score than the other player 
-% 
-% * tie(State)  
-%   - true if terminal State is a "tie" (no winner) 
-% 
-% * terminal(State)  
-%   - true if State is a terminal 
-% 
-% * showState(State) prints out the current state of the game 
-%                    so that the human player can understand where 
-%                    they are in the game. 
-%                    (You can simply use printGrid(B) here)
-% 
-% * moves(Plyr,State,MvList) 
-%   - returns list MvList of all legal moves Plyr can make in State 
-% 
-% * nextState(Plyr,Move,State,NewState,NextPlyr) 
-%   - given that Plyr makes Move in State, it determines next state
-%    (NewState) and next player to move (NextPlayer). That is, it
-%    changes State by playing Move. 
-% 
-% * validmove(Plyr,State,Proposed) 
-%   - true if Proposed move by Plyr is valid at State. 
-% 
-% * h(State,Val) 
-%   - given State, returns heuristic Val of that state 
-%   - larger values are good for Max, smaller values are good for Min 
-%   NOTE1. that since we doing depth bounded Min-Max search, we will not 
-%   always reach terminal nodes. Instead we have to terminate with a 
-%   heuristic evaluation of the depth-bounded non-terminal states. 
-%   NOTE2. If State is terminal h should return its true value. 
-% 
-% * lowerBound(B) 
-%   - returns a value B less than the actual utility or heuristic value 
-%     of any node (i.e., less than Min's best possible value) 
-% 
-% * upperBound(B) 
-%   - returns a value B greater than the actual utility or heuristic value 
-%     of any node (i.e., greater than Max's best possible value) 
-% 
-% Note that lowerBound and upperBound are static properties of the 
-% game.  
+% This script can be used to carry out automated test-runs of your AI code
+% in othello.pl as a complement to manual playing/testing.
+%
+% NB! The name of each procedure that has been added ends with XYZ to
+% lower (eliminate?) the risk of name collisions with procedures
+% in othello.pl. 
+%   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
- 
- 
-%  MAIN PLAY ROUTINE 
- 
-play :- initialize(InitState,Plyr), playgame(Plyr,InitState). 
- 
-% playgame(Plyr,State) - plays the game from State with Plyr moving first 
-% - tests for a winner; if not, get move from player, determine next State 
-%   and player, and continue from new state/player 
+
+% stonesXYZ(State, Plyr, Stones) - counts number of stones Plyr has on board State
+
+stonesXYZ([],_,0).
+stonesXYZ([F|Rest],P,N) :-
+    stonesXYZ(Rest,P,N2),
+    stonesXXYZ(F,P,N3),
+    N is N2+N3.
+stonesXXYZ([],_,0).
+stonesXXYZ([X|T],P,N) :-
+    stonesXXYZ(T,P,N2),
+    (X == P
+        -> N is N2+1
+        ;  N is N2
+    ).
+
+otherXYZ(1,2).
+otherXYZ(2,1).
+
+currentScoreXYZ(State) :-
+    stonesXYZ(State,1,N1),
+    stonesXYZ(State,2,N2),
+    write('Stupid (player 1) has '),
+    write(N1),
+    write(' pieces while Computer (player 2) has '),
+    writeln(N2),
+    nl.
+
+play :- initialize(InitState,Plyr), playgame(Plyr,InitState),!. 
+
+playgame(_,State) :- 
+    winner(State,Winner), !,
+    nl,
+    writeln('*** G A M E   O V E R ***'),
+    (Winner == 1
+        -> writeln('Stupid (player 1) wins!')
+        ;  writeln('Computer (player 2) wins.')
+    ),
+    writeln('*************************'),
+    showState(State),
+    currentScoreXYZ(State). 
  
 playgame(_,State) :- 
-  winner(State,Winner), !, 
-  % winner(State,Winner,Score), 
-  write('Win by Player number '), writeln(Winner). 
-  % write('Win by Player number '), write(Winner), 
-  % write('With Score '), writeln(Score). 
- 
-playgame(_,State) :- 
-  tie(State), !, 
-  writeln('Game ended with no winner!'). 
+    tie(State), !,
+    nl,writeln('Game ended with no winner!'),
+    writeln('Final board:'),
+    showState(State),
+    currentScoreXYZ(State).
+
  
 playgame(Plyr,State) :- 
   getmove(Plyr,State,Move), 
-  write('The move chosen is : '), 
+  write('Result: The move chosen is : '), 
   writeln(Move), 
   nextState(Plyr,Move,State,NewState,NextPlyr), 
   playgame(NextPlyr,NewState). 
@@ -103,25 +90,31 @@ playgame(Plyr,State) :-
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % getmove(Player,State,Move) 
-% If Player = 1, move obtained from stdio 
-% If Player = 2, move obtained using search 
- 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-% Get move for player 1 (human) 
-% - show state, ask for move, verify if move is valid 
-% - if move is invalid, recall getmove until a valid move is input 
- 
+% Get move for player 1 (stupid) 
+
+freeXYZ(State,[X,Y]) :-
+    member(X,[0,1,2,3,4,5]),
+    member(Y,[0,1,2,3,4,5]),
+    get(State,[X,Y],Value),
+    Value == '.'. % only return empty squares
+
 getmove(1,State,Move) :- 
-  showState(State), 
-  write('Please input move followed by a period: '), 
-  read(Proposed), 
-  validmove(1,State,Proposed), !, 
-  Move = Proposed. 
- 
-getmove(1,State,Move) :- 
-  writeln('Invalid Move Proposed.'), 
-  getmove(1,State,Move). 
- 
+    showState(State),
+    currentScoreXYZ(State),
+    setof(Mv, freeXYZ(State,Mv),Moves), % collect all empty squares
+    random_permutation(Moves, Perm), % permute the squares
+    % writeln(Perm), % uncomment to see all empty squares
+    member(Proposed,Perm), % try one square at a time
+    write('Stupid is trying move '),write(Proposed),
+    (validmove(1,State,Proposed)
+        -> !, Move = Proposed, nl 
+        ;  writeln(' ... *** Invalid! ***'), fail % backtrack and try another square
+    ). 
+
+getmove(1,_,n) :-
+    writeln('Stupid is forced to play a null move').
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % Get move for player 2 (computer) 
 % - do this using minimax evaluation 
@@ -130,16 +123,16 @@ getmove(1,State,Move) :-
 %  Depth should be set appropriately below.
  
 getmove(2,State,Move) :- 
-  showState(State), 
-  writeln('Computer is moving...'),
-  MaxDepth is 4, % max depth is here set to 6
-  mmeval(2,State,_,Move,MaxDepth,SeF), 
-  write('Computer move computed by searching '), 
-  write(SeF), 
-  write(' states with max depth '),
-  write(MaxDepth),
-  writeln(".").
- 
+    showState(State),
+    currentScoreXYZ(State),
+    writeln('Computer is moving...'),
+    MaxDepth is 4, % max depth is here set to 4
+    mmeval(2,State,_,Move,MaxDepth,SeF), 
+    write('Computer move computed by searching '), 
+    write(SeF), 
+    write(' states with max depth '),
+    writeln(MaxDepth).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % mini-max eval
 % mmeval(Plyr,State,Value,BestMove,Depth,StatesSearched) 
@@ -208,9 +201,10 @@ evalMoves(_,_,[],Val,BestMv,Val,BestMv,_,Se,Se) :- !.
 % that results from this move), and replace current Best move and value 
 % by this Mv/Value if value is "better" 
 
-evalMoves(1,St,[Mv|Rest],ValSoFar,MvSoFar,Val,BestMv,D,Se,SeF) :- 
+evalMoves(1,St,[Mv|Rest],ValSoFar,MvSoFar,Val,BestMv,D,Se,SeF) :-
+  % write("Player: 1"), 
   nextState(1,Mv,St,NewSt,NextPlyr), !,
-%  write('evalMoves 1: '), write(Mv), write(' D='), write(D), write(' S='), write(Se), showState(NewSt),
+  % write('evalMoves 1: '), write(Mv), write(' D='), write(D), write(' S='), write(Se), showState(NewSt),
   Dnew is D - 1, 
   mmeval(NextPlyr,NewSt,MvVal,_,Dnew,SeI), !,
   maxMove(ValSoFar,MvSoFar,MvVal,Mv,NewValSoFar,NewMvSoFar), 
@@ -219,6 +213,7 @@ evalMoves(1,St,[Mv|Rest],ValSoFar,MvSoFar,Val,BestMv,D,Se,SeF) :-
  
  
 evalMoves(2,St,[Mv|Rest],ValSoFar,MvSoFar,Val,BestMv,D,Se,SeF) :- 
+  % write("Player: 2"), 
   nextState(2,Mv,St,NewSt,NextPlyr), !,
 %  write('evalMoves 2: '), write(Mv), write(' D='), write(D), write(' S='), write(Se), showState(NewSt),
   Dnew is D - 1, 
