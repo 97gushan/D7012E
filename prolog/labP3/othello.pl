@@ -11,7 +11,10 @@
 
 
 %do not chagne the follwoing line!
-:- ensure_loaded('play.pl').
+% :- ensure_loaded('play.pl').
+:- ensure_loaded('testboards.pl').
+:- ensure_loaded('rndBoard.pl').
+:- ensure_loaded('stupid.pl').
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -118,7 +121,7 @@ tie(State) :-
 	terminal(State),
 	score(State, 1, S1),
 	score(State, 2, S2),
-	S1 = S2, !.
+	S1 =:= S2, !.
 
 score([], _, 0).
 score([Row | Rows], Player, Score) :-
@@ -146,10 +149,8 @@ score([Point| Row], Player, Score) :-
 terminal(State) :-
 	moves(1, State, M1),
 	moves(2, State, M2),
-	length(M1, L1),
-	length(M2, L2),
-	L1 = 0,
-	L2 = 0.
+	M1 == [n],
+	M2 == [n].
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -189,7 +190,7 @@ moves(Plyr, State, MvList) :-
 moves(Plyr, State, [n]) :-
 	findall([X, Y], validmove(Plyr, State, [X,Y]), M),
 	length(M, L),
-	L \= 0, !.
+	L == 0.
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -200,6 +201,7 @@ moves(Plyr, State, [n]) :-
 %   - given that Plyr makes Move in State, it determines NewState (i.e. the next 
 %     state) and NextPlayer (i.e. the next player who will move).
 %
+nextState(Plyr, n, State, State, NextPlyr) :- nextPlayer(Plyr, NextPlyr).
 
 nextState(Plyr, Move, State, S8, NextPlyr) :-
 	moves(Plyr, State, MvList),
@@ -228,12 +230,16 @@ flipControl(Plyr, State, [X, Y], XDiff, YDiff, NewState) :-
 shouldFlip(Plyr, State, [X,Y],  XDiff, YDiff) :-
 	NX is X + XDiff,
 	NY is Y + YDiff,
+	coordInbound(NX),
+	coordInbound(NY),
 	get(State, [NX,NY], Value),
-	Plyr = Value.
+	Plyr == Value.
 
 shouldFlip(Plyr, State, [X,Y], XDiff, YDiff) :-
 	NX is X + XDiff,
 	NY is Y + YDiff,
+	coordInbound(NX),
+	coordInbound(NY),
 	get(State, [NX,NY], Value),
 	enemy(Plyr, Value),
 	shouldFlip(Plyr, State, [NX,NY], XDiff, YDiff).
@@ -241,12 +247,16 @@ shouldFlip(Plyr, State, [X,Y], XDiff, YDiff) :-
 flip(Plyr, State, [X,Y],  XDiff, YDiff, State) :-
 	NX is X + XDiff,
 	NY is Y + YDiff,
+	coordInbound(NX),
+	coordInbound(NY),
 	get(State, [NX,NY], Value),
-	Plyr = Value.
+	Plyr == Value.
 
 flip(Plyr, State, [X,Y], XDiff, YDiff, NewState) :-
 	NX is X + XDiff,
 	NY is Y + YDiff,
+	coordInbound(NX),
+	coordInbound(NY),
 	get(State, [NX,NY], Value),
 	enemy(Plyr, Value),
 	set(State, TmpState, [NX, NY], Plyr),
@@ -269,14 +279,19 @@ enemyNeighbor(Plyr, State, [X, Y]) :-
 	Y1 is Y+1,
 	Y2 is Y-1,
 	(
-	get(State, [X, Y1], V1), enemy(Plyr, V1);
-	get(State, [X, Y2], V2), enemy(Plyr, V2);
-	get(State, [X1, Y], V3), enemy(Plyr, V3);
-	get(State, [X2, Y], V4), enemy(Plyr, V4)).
+	(coordInbound(Y1), get(State, [X, Y1], V1), enemy(Plyr, V1));
+	(coordInbound(Y2), get(State, [X, Y2], V2), enemy(Plyr, V2));
+	(coordInbound(X1), get(State, [X1, Y], V3), enemy(Plyr, V3));
+	(coordInbound(X2), get(State, [X2, Y], V4), enemy(Plyr, V4))).
 
 enemy(Plyr, Val) :-
 	Val \= Plyr,
 	Val \= '.'.
+
+
+coordInbound(X) :-
+	X >= 0, !,
+	X < 6.
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -289,21 +304,16 @@ enemy(Plyr, Val) :-
 %   NOTE2. If State is not terminal h should be an estimate of
 %          the value of state (see handout on ideas about
 %          good heuristics.
-h(State, 100) :-
+h(State, -100) :-
 	winner(State, 2), !.
 
-h(State, -100) :-
+h(State, 100) :-
 	winner(State, 1), !.
 
 h(State, 0) :-
 	tie(State), !. 
 
 h(_, 0).
-
-% h(State, Val) :-
-% 	score(State, 1, S1),
-% 	score(State, 2, S2),
-% 	Val is S1 - S2.
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
