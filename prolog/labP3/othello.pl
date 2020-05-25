@@ -130,7 +130,7 @@ score([Row | Rows], Player, Score) :-
 	Score is S1 + S2.
 
 score([Point | Row], Player, Score) :-
-	Point = Player, !,
+	Point = Player,
 	score(Row, Player, S1),
 	Score is 1 + S1.
 
@@ -182,16 +182,23 @@ printList([H | L]) :-
 %
 
 moves(Plyr, State, MvList) :-
-	findall([X, Y], validmove(Plyr, State, [X,Y]), M),
+	setof([X, Y], genMoves(Plyr, State, [X,Y]), M),
 	length(M, L),
-	L \= 0, !,
+	L \= 0,
 	sort(0, @<, M, MvList).
 
 moves(Plyr, State, [n]) :-
-	findall([X, Y], validmove(Plyr, State, [X,Y]), M),
+	findall([X, Y], genMoves(Plyr, State, [X,Y]), M),
 	length(M, L),
-	L == 0.
+	L =:= 0.
 
+genMoves(Plyr, State, [X, Y]) :-
+	get(State, [X, Y], Value),
+	Value = '.',
+	(((shouldFlip(Plyr, State, [X, Y], 1, 0));
+	( shouldFlip(Plyr, State, [X, Y], -1, 0));
+	( shouldFlip(Plyr, State, [X, Y], 0, 1));
+	( shouldFlip(Plyr, State, [X, Y], 0, -1)))).
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -201,21 +208,20 @@ moves(Plyr, State, [n]) :-
 %   - given that Plyr makes Move in State, it determines NewState (i.e. the next 
 %     state) and NextPlayer (i.e. the next player who will move).
 %
-nextState(Plyr, n, State, State, NextPlyr) :- nextPlayer(Plyr, NextPlyr).
+nextState(Plyr, n, State, State, NextPlyr) :- nextPlayer(Plyr, NextPlyr), !.
 
 nextState(Plyr, Move, State, S8, NextPlyr) :-
-	moves(Plyr, State, MvList),
-	member(Move, MvList), !,
+	validmove(Plyr, State, Move), !,
 	nextPlayer(Plyr, NextPlyr),
 	set(State, S, Move, Plyr),
 
-	flipControl(Plyr, S, Move, 1, 0, S1), !,
-	flipControl(Plyr, S1, Move, -1, 0, S2), !,
-	flipControl(Plyr, S2, Move, 0, 1, S3), !,
-	flipControl(Plyr, S3, Move, 0, -1, S4), !,
-	flipControl(Plyr, S4, Move, 1, 1, S5), !,
-	flipControl(Plyr, S5, Move, 1, -1, S6), !,
-	flipControl(Plyr, S6, Move, -1, 1, S7), !,
+	flipControl(Plyr, S, Move, 1, 0, S1),
+	flipControl(Plyr, S1, Move, -1, 0, S2),
+	flipControl(Plyr, S2, Move, 0, 1, S3),
+	flipControl(Plyr, S3, Move, 0, -1, S4),
+	flipControl(Plyr, S4, Move, 1, 1, S5),
+	flipControl(Plyr, S5, Move, 1, -1, S6),
+	flipControl(Plyr, S6, Move, -1, 1, S7),
 	flipControl(Plyr, S7, Move, -1, -1, S8).
 
 
@@ -230,33 +236,33 @@ flipControl(Plyr, State, [X, Y], XDiff, YDiff, NewState) :-
 shouldFlip(Plyr, State, [X,Y],  XDiff, YDiff) :-
 	NX is X + XDiff,
 	NY is Y + YDiff,
-	coordInbound(NX),
-	coordInbound(NY),
-	get(State, [NX,NY], Value),
-	Plyr == Value.
+	NX2 is X + 2* XDiff,
+	NY2 is Y + 2* YDiff,
+	get(State, [NX,NY], V1),
+	get(State, [NX2,NY2], V2),
+	enemy(Plyr, V1),
+	Plyr = V2.
 
 shouldFlip(Plyr, State, [X,Y], XDiff, YDiff) :-
 	NX is X + XDiff,
 	NY is Y + YDiff,
-	coordInbound(NX),
-	coordInbound(NY),
-	get(State, [NX,NY], Value),
-	enemy(Plyr, Value),
+	NX2 is X + 2* XDiff,
+	NY2 is Y + 2* YDiff,
+	get(State, [NX,NY], V1),
+	get(State, [NX2,NY2], V2),
+	enemy(Plyr, V1),
+	enemy(Plyr, V2),
 	shouldFlip(Plyr, State, [NX,NY], XDiff, YDiff).
 
 flip(Plyr, State, [X,Y],  XDiff, YDiff, State) :-
 	NX is X + XDiff,
 	NY is Y + YDiff,
-	coordInbound(NX),
-	coordInbound(NY),
 	get(State, [NX,NY], Value),
 	Plyr == Value.
 
 flip(Plyr, State, [X,Y], XDiff, YDiff, NewState) :-
 	NX is X + XDiff,
 	NY is Y + YDiff,
-	coordInbound(NX),
-	coordInbound(NY),
 	get(State, [NX,NY], Value),
 	enemy(Plyr, Value),
 	set(State, TmpState, [NX, NY], Plyr),
@@ -268,30 +274,15 @@ flip(Plyr, State, [X,Y], XDiff, YDiff, NewState) :-
 %% 
 %% define validmove(Plyr,State,Proposed). 
 %   - true if Proposed move by Plyr is valid at State.
-validmove(Plyr, State, [X, Y]) :-
-	get(State, [X, Y], Value),
-	Value = '.',
-	enemyNeighbor(Plyr, State, [X, Y]).
+validmove(Plyr, State, Move) :-
+	moves(Plyr, State, MvList),
+	member(Move, MvList).
 
-enemyNeighbor(Plyr, State, [X, Y]) :-
-	X1 is X+1,
-	X2 is X-1,
-	Y1 is Y+1,
-	Y2 is Y-1,
-	(
-	(coordInbound(Y1), get(State, [X, Y1], V1), enemy(Plyr, V1));
-	(coordInbound(Y2), get(State, [X, Y2], V2), enemy(Plyr, V2));
-	(coordInbound(X1), get(State, [X1, Y], V3), enemy(Plyr, V3));
-	(coordInbound(X2), get(State, [X2, Y], V4), enemy(Plyr, V4))).
 
 enemy(Plyr, Val) :-
 	Val \= Plyr,
 	Val \= '.'.
 
-
-coordInbound(X) :-
-	X >= 0, !,
-	X < 6.
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -305,17 +296,18 @@ coordInbound(X) :-
 %          the value of state (see handout on ideas about
 %          good heuristics.
 h(State, -100) :-
-	winner(State, 2), !.
-
-h(State, 100) :-
 	winner(State, 1), !.
 
+h(State, 100) :-
+	winner(State, 2), !.
+
 h(State, 0) :-
-	tie(State), !. 
+	tie(State), !.
 
-h(_, 0).
-
-
+h(State, Val) :-
+	score(State, 1, S1),
+	score(State, 2, S2),
+	Val is S2 - S1.
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%lowerBound(B)%%%%%%%%%%%%%%%%%%%%%%%%%
