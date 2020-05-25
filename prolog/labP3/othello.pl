@@ -66,11 +66,11 @@
 %
 % given helper: Inital state of the board
 
-initBoard([ [.,.,2,.,.,.], 
-            [.,.,2,.,.,.],
-	    	[.,2,1,2,.,.], 
-	    	[1,.,2,1,.,.], 
-            [.,1,.,.,.,.], 
+initBoard([ [.,.,.,.,.,.], 
+            [.,.,.,.,.,.],
+	    	[.,.,1,2,.,.], 
+	    	[.,.,2,1,.,.], 
+            [.,.,.,.,.,.], 
 	    	[.,.,.,.,.,.] ]).
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -80,7 +80,7 @@ initBoard([ [.,.,2,.,.,.],
 %%%  holds iff InitialState is the initial state and 
 %%%  InitialPlyr is the player who moves first. 
 
-initialize(initBoard, 1).
+initialize(B, 1) :- initBoard(B).
 
 
 
@@ -99,11 +99,11 @@ winner(State, Plyr) :-
 
 
 winner(S1, S2, Plyr) :-
-	S1 < S2,
+	S1 < S2, !,
 	Plyr is 1.
 
 winner(S1, S2, Plyr) :-
-	S2 < S1,
+	S2 < S1,!,
 	Plyr is 2.
 
 
@@ -118,7 +118,7 @@ tie(State) :-
 	terminal(State),
 	score(State, 1, S1),
 	score(State, 2, S2),
-	S1 = S2.
+	S1 = S2, !.
 
 score([], _, 0).
 score([Row | Rows], Player, Score) :-
@@ -143,10 +143,13 @@ score([Point| Row], Player, Score) :-
 %% define terminal(State). 
 %   - true if State is a terminal   
 
-terminal(State).
-
-
-
+terminal(State) :-
+	moves(1, State, M1),
+	moves(2, State, M2),
+	length(M1, L1),
+	length(M2, L2),
+	L1 = 0,
+	L2 = 0.
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -179,7 +182,14 @@ printList([H | L]) :-
 
 moves(Plyr, State, MvList) :-
 	findall([X, Y], validmove(Plyr, State, [X,Y]), M),
+	length(M, L),
+	L \= 0, !,
 	sort(0, @<, M, MvList).
+
+moves(Plyr, State, [n]) :-
+	findall([X, Y], validmove(Plyr, State, [X,Y]), M),
+	length(M, L),
+	L \= 0, !.
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -193,17 +203,17 @@ moves(Plyr, State, MvList) :-
 
 nextState(Plyr, Move, State, S8, NextPlyr) :-
 	moves(Plyr, State, MvList),
-	member(Move, MvList),
+	member(Move, MvList), !,
 	nextPlayer(Plyr, NextPlyr),
 	set(State, S, Move, Plyr),
 
-	flipControl(Plyr, S, Move, 1, 0, S1),
-	flipControl(Plyr, S1, Move, -1, 0, S2),
-	flipControl(Plyr, S2, Move, 0, 1, S3),
-	flipControl(Plyr, S3, Move, 0, -1, S4),
-	flipControl(Plyr, S4, Move, 1, 1, S5),
-	flipControl(Plyr, S5, Move, 1, -1, S6),
-	flipControl(Plyr, S6, Move, -1, 1, S7),
+	flipControl(Plyr, S, Move, 1, 0, S1), !,
+	flipControl(Plyr, S1, Move, -1, 0, S2), !,
+	flipControl(Plyr, S2, Move, 0, 1, S3), !,
+	flipControl(Plyr, S3, Move, 0, -1, S4), !,
+	flipControl(Plyr, S4, Move, 1, 1, S5), !,
+	flipControl(Plyr, S5, Move, 1, -1, S6), !,
+	flipControl(Plyr, S6, Move, -1, 1, S7), !,
 	flipControl(Plyr, S7, Move, -1, -1, S8).
 
 
@@ -279,9 +289,21 @@ enemy(Plyr, Val) :-
 %   NOTE2. If State is not terminal h should be an estimate of
 %          the value of state (see handout on ideas about
 %          good heuristics.
+h(State, 100) :-
+	winner(State, 2), !.
 
+h(State, -100) :-
+	winner(State, 1), !.
 
+h(State, 0) :-
+	tie(State), !. 
 
+h(_, 0).
+
+% h(State, Val) :-
+% 	score(State, 1, S1),
+% 	score(State, 2, S2),
+% 	Val is S1 - S2.
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -291,9 +313,7 @@ enemy(Plyr, Val) :-
 %% define lowerBound(B).  
 %   - returns a value B that is less than the actual or heuristic value
 %     of all states.
-
-
-
+lowerBound(-101).
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -303,7 +323,7 @@ enemy(Plyr, Val) :-
 %% define upperBound(B). 
 %   - returns a value B that is greater than the actual or heuristic value
 %     of all states.
-
+upperBound(101).
 
 
 
