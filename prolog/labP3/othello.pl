@@ -8,13 +8,21 @@
 %
 /* ------------------------------------------------------- */
 
-
+% Stupid: 1 - Bot: 9
 
 %do not chagne the follwoing line!
 % :- ensure_loaded('play.pl').
-:- ensure_loaded('testboards.pl').
-:- ensure_loaded('rndBoard.pl').
 :- ensure_loaded('stupid.pl').
+
+:- ensure_loaded('rndBoard.pl').
+:- ensure_loaded('testboards.pl').
+
+
+initialize(B, 1) :- initBoard(B).
+% initialize(B, 1) :- testBoard1(B).
+% initialize(B, 1) :- testBoard2(B).
+% initialize(B, 1) :- testBoard3(B).
+% initialize(B, 1) :- rndBoardXYZ(B).
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -83,10 +91,6 @@ initBoard([ [.,.,.,.,.,.],
 %%%  holds iff InitialState is the initial state and 
 %%%  InitialPlyr is the player who moves first. 
 
-initialize(B, 1) :- initBoard(B).
-
-
-
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%winner(...)%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -121,7 +125,7 @@ tie(State) :-
 	terminal(State),
 	score(State, 1, S1),
 	score(State, 2, S2),
-	S1 =:= S2, !.
+	S1 =:= S2.
 
 score([], _, 0).
 score([Row | Rows], Player, Score) :-
@@ -198,7 +202,11 @@ genMoves(Plyr, State, [X, Y]) :-
 	(((shouldFlip(Plyr, State, [X, Y], 1, 0));
 	( shouldFlip(Plyr, State, [X, Y], -1, 0));
 	( shouldFlip(Plyr, State, [X, Y], 0, 1));
-	( shouldFlip(Plyr, State, [X, Y], 0, -1)))).
+	( shouldFlip(Plyr, State, [X, Y], 0, -1));
+	( shouldFlip(Plyr, State, [X, Y], 1, 1));
+	( shouldFlip(Plyr, State, [X, Y], 1, -1));
+	( shouldFlip(Plyr, State, [X, Y], -1, 1));
+	( shouldFlip(Plyr, State, [X, Y], -1, -1)))).
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -295,14 +303,14 @@ enemy(Plyr, Val) :-
 %   NOTE2. If State is not terminal h should be an estimate of
 %          the value of state (see handout on ideas about
 %          good heuristics.
-h(State, -100) :-
-	winner(State, 1), !.
+h(State, -37) :-
+	winner(State, 1).
 
-h(State, 100) :-
-	winner(State, 2), !.
+h(State, 37) :-
+	winner(State, 2).
 
 h(State, 0) :-
-	tie(State), !.
+	tie(State).
 
 h(State, Val) :-
 	score(State, 1, S1),
